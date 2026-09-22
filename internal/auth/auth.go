@@ -1,15 +1,27 @@
-﻿package auth
+package auth
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secretKey = []byte("secret-key")
+type TokenManager struct {
+	secretKey []byte
+}
 
-func CreateToken(host string, port int) (string, error) {
+func NewTokenManager(secret string) (*TokenManager, error) {
+	if secret == "" {
+		return nil, errors.New("JWT_SECRET must be set")
+	}
+	return &TokenManager{
+		secretKey: []byte(secret),
+	}, nil
+}
+
+func (tm *TokenManager) CreateToken(host string, port int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"port": port,
@@ -17,17 +29,15 @@ func CreateToken(host string, port int) (string, error) {
 			"exp":  time.Now().Add(time.Hour * 24).Unix(),
 		})
 
-	tokenString, err := token.SignedString(secretKey)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+	return token.SignedString(tm.secretKey)
 }
 
-func VerifyToken(tokenString string) error {
+func (tm *TokenManager) VerifyToken(tokenString string) error {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected Signing Method: %v", token.Header["alg"])
+		}
+		return tm.secretKey, nil
 	})
 
 	if err != nil {
