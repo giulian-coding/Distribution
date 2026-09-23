@@ -16,7 +16,11 @@ func main() {
 		log.Fatalf("error while creating the Token Manager: %v", err)
 	}
 
-	host := "test"
+	host, err := os.Hostname()
+	if err != nil {
+		log.Fatalf("error retrieving hostname: %v", err)
+	}
+
 	port := 8080
 
 	token, err := tokenManager.CreateToken(host, port)
