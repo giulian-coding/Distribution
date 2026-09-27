@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/giulian-coding/Distribution/internal/auth"
+	"github.com/giulian-coding/Distribution/internal/controller"
 )
 
 func main() {
@@ -34,4 +35,5 @@ func main() {
 	}
 	fmt.Println("token verification successful")
 
+	controller.RunTui()
 }
